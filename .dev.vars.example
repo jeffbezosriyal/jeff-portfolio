@@ -1,0 +1,3 @@
+# Copy to .dev.vars for local testing with `npm run preview:cf` (never commit .dev.vars)
+GEMINI_API_KEY=your-key-from-google-ai-studio
+# GEMINI_MODEL=gemini-flash-latest
