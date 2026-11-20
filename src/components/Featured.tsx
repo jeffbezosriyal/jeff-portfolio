@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { featuredProjects } from "../content";
+import { useMotionTilt } from "../hooks/useMotionTilt";
 import SafeImg from "./SafeImg";
 import { FlutterHmiPlaceholder, ScreenshotPlaceholder } from "./Placeholders";
 
@@ -15,12 +16,16 @@ const ESAB_PROMPT = "Tell me about the ESAB Transmax XP6 Flutter HMI app and how
 
 export default function Featured({ onAskChat }: { onAskChat: (draft: string) => void }) {
   const [esabView, setEsabView] = useState<"tablet" | "mobile">("tablet");
+  const panelRefs = useRef<(HTMLElement | null)[]>([]);
+
+  useMotionTilt(panelRefs, { maxDeg: 14, maxShift: 8, maxScale: 0.05, pad: 70 });
 
   return (
     <section id="featured" className="section container featured-list" aria-label="Featured Projects">
       {featuredProjects.map((proj, idx) => {
         const hasDual = Boolean(proj.secondaryImage);
-        const activeImg = hasDual && esabView === "mobile" ? proj.secondaryImage! : proj.image;
+        const isMobileView = hasDual && esabView === "mobile";
+        const activeImg = isMobileView ? proj.secondaryImage! : proj.image;
         const isEsab = proj.id === "esab-flutter";
 
         return (
@@ -76,7 +81,10 @@ export default function Featured({ onAskChat }: { onAskChat: (draft: string) => 
               </div>
             </div>
             <div className="featured__media">
-              <div className={`featured__panel${hasDual && esabView === "mobile" ? " featured__panel--contain" : ""}`}>
+              <div
+                ref={(el) => { panelRefs.current[idx] = el; }}
+                className={`featured__panel${isMobileView ? " featured__panel--mobile" : ""}`}
+              >
                 <SafeImg
                   file={activeImg}
                   alt={`${proj.title} ${hasDual ? esabView : ""} preview`}

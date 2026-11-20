@@ -18,6 +18,7 @@ export default function ChatWidget({ triggerOpen, draft, onDraftConsumed }: { tr
   const [showTop, setShowTop] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const chatRef = useRef<HTMLElement>(null);
   const closeTimer = useRef<number>();
 
   const openChat = () => {
@@ -64,9 +65,38 @@ export default function ChatWidget({ triggerOpen, draft, onDraftConsumed }: { tr
       if (e.key === "Escape") closeChat();
     };
     window.addEventListener("keydown", onKey);
+
+    const isMobile = window.matchMedia?.("(max-width: 480px)").matches;
+    const prevOverflow = document.body.style.overflow;
+    if (isMobile) document.body.style.overflow = "hidden";
+
+    const vv = window.visualViewport;
+    const syncViewport = () => {
+      const el = chatRef.current;
+      if (!el || !vv || !window.matchMedia?.("(max-width: 480px)").matches) return;
+      el.style.height = `${vv.height}px`;
+      el.style.top = `${vv.offsetTop}px`;
+      endRef.current?.scrollIntoView({ block: "end" });
+    };
+
+    if (vv) {
+      syncViewport();
+      vv.addEventListener("resize", syncViewport);
+      vv.addEventListener("scroll", syncViewport);
+    }
+
     return () => {
       window.clearTimeout(t);
       window.removeEventListener("keydown", onKey);
+      if (isMobile) document.body.style.overflow = prevOverflow;
+      if (vv) {
+        vv.removeEventListener("resize", syncViewport);
+        vv.removeEventListener("scroll", syncViewport);
+      }
+      if (chatRef.current) {
+        chatRef.current.style.height = "";
+        chatRef.current.style.top = "";
+      }
     };
   }, [open, closing]);
 
@@ -140,7 +170,7 @@ export default function ChatWidget({ triggerOpen, draft, onDraftConsumed }: { tr
         </div>
       )}
       {open && (
-        <section className={`chat${closing ? " chat--closing" : ""}`} role="dialog" aria-label="Ask Jeffry chat">
+        <section ref={chatRef} className={`chat${closing ? " chat--closing" : ""}`} role="dialog" aria-label="Ask Jeffry chat">
           <header className="chat__head">
             <div className="chat__title">
               <span className="chat__dot" aria-hidden="true" />
