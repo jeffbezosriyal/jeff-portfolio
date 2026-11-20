@@ -327,8 +327,8 @@ ul { list-style: none; margin: 0; padding: 0; }
 .explorer__list {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  gap: .45rem;
+  justify-content: flex-start;
+  gap: .5rem;
 }
 .explorer__item {
   width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 1rem;
