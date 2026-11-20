@@ -76,7 +76,7 @@ export default function SkillMatrix() {
               <span className="matrix-card__cat">{active.category}</span>
               <h3>{active.name}</h3>
             </div>
-            <div className="gauge" aria-label={`${active.usage}% usage depth`}>
+            <div className="gauge" data-tip="Production usage & proficiency" aria-label={`${active.usage}% usage depth`}>
               <svg viewBox="0 0 84 84">
                 <circle cx="42" cy="42" r={R} className="gauge__bg" />
                 <circle

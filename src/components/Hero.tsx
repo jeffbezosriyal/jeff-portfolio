@@ -40,56 +40,86 @@ export default function Hero() {
   }, [typed, deleting, roleIdx]);
 
   useEffect(() => {
-    const fine = window.matchMedia?.("(pointer: fine)").matches;
     const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     const el = avatarRef.current;
-    if (!fine || reduced || !el) return;
+    if (reduced || !el) return;
 
+    const applyTilt = (rx: number, ry: number, tx: number, ty: number, scale: number, active: boolean) => {
+      el.style.setProperty("--rx", `${rx.toFixed(2)}deg`);
+      el.style.setProperty("--ry", `${ry.toFixed(2)}deg`);
+      el.style.setProperty("--tx", `${tx.toFixed(2)}px`);
+      el.style.setProperty("--ty", `${ty.toFixed(2)}px`);
+      el.style.setProperty("--scale", `${scale.toFixed(3)}`);
+      el.classList.toggle("is-near", active);
+    };
+
+    const resetTilt = () => applyTilt(0, 0, 0, 0, 1, false);
+
+    // Desktop mouse proximity tilt
+    const fine = window.matchMedia?.("(pointer: fine)").matches;
     const onMove = (e: PointerEvent) => {
+      if (!fine) return;
       const r = el.getBoundingClientRect();
-      const cx = r.left + r.width / 2;
-      const cy = r.top + r.height / 2;
-      const dx = e.clientX - cx;
-      const dy = e.clientY - cy;
+      const dx = e.clientX - (r.left + r.width / 2);
+      const dy = e.clientY - (r.top + r.height / 2);
       const dist = Math.hypot(dx, dy);
-      const radius = Math.max(r.width * 1.45, 260);
+      const radius = Math.max(r.width * 1.45, 280);
 
       if (dist < radius) {
-        const strength = 1 - dist / radius;
-        const rx = (-dy / radius) * 22 * (0.5 + strength);
-        const ry = (dx / radius) * 22 * (0.5 + strength);
-        const tx = (dx / radius) * 10 * strength;
-        const ty = (dy / radius) * 10 * strength;
-        el.style.setProperty("--rx", `${rx.toFixed(2)}deg`);
-        el.style.setProperty("--ry", `${ry.toFixed(2)}deg`);
-        el.style.setProperty("--tx", `${tx.toFixed(2)}px`);
-        el.style.setProperty("--ty", `${ty.toFixed(2)}px`);
-        el.style.setProperty("--scale", `${(1 + 0.08 * strength).toFixed(3)}`);
-        el.classList.add("is-near");
+        const s = 1 - dist / radius;
+        applyTilt((-dy / radius) * 22 * (0.5 + s), (dx / radius) * 22 * (0.5 + s), (dx / radius) * 10 * s, (dy / radius) * 10 * s, 1 + 0.08 * s, true);
       } else {
-        el.style.setProperty("--rx", "0deg");
-        el.style.setProperty("--ry", "0deg");
-        el.style.setProperty("--tx", "0px");
-        el.style.setProperty("--ty", "0px");
-        el.style.setProperty("--scale", "1");
-        el.classList.remove("is-near");
+        resetTilt();
       }
     };
 
-    const onLeave = () => {
-      el.style.setProperty("--rx", "0deg");
-      el.style.setProperty("--ry", "0deg");
-      el.style.setProperty("--tx", "0px");
-      el.style.setProperty("--ty", "0px");
-      el.style.setProperty("--scale", "1");
-      el.classList.remove("is-near");
+    // Mobile gyroscope tilt (Android + iOS 13+ permission on tap)
+    let baseBeta: number | null = null;
+    let baseGamma: number | null = null;
+    const clamp = (v: number, lim: number) => Math.max(-lim, Math.min(lim, v));
+
+    const onOrientation = (e: DeviceOrientationEvent) => {
+      if (e.beta == null || e.gamma == null) return;
+      if (baseBeta === null) baseBeta = e.beta;
+      if (baseGamma === null) baseGamma = e.gamma;
+      const db = clamp(e.beta - baseBeta, 30);
+      const dg = clamp(e.gamma - baseGamma, 30);
+      const mag = Math.min(1, Math.hypot(db, dg) / 25);
+      applyTilt((-db / 30) * 18, (dg / 30) * 18, (dg / 30) * 10, (db / 30) * 10, 1 + 0.06 * mag, mag > 0.12);
     };
 
-    window.addEventListener("pointermove", onMove, { passive: true });
-    window.addEventListener("pointerleave", onLeave);
+    let gyroAttached = false;
+    const attachGyro = () => {
+      if (gyroAttached) return;
+      gyroAttached = true;
+      window.addEventListener("deviceorientation", onOrientation, { passive: true });
+    };
+
+    const DevOrient = window.DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<string> } | undefined;
+    const onFirstTap = () => {
+      if (DevOrient && typeof DevOrient.requestPermission === "function") {
+        DevOrient.requestPermission().then((res) => { if (res === "granted") attachGyro(); }).catch(() => {});
+      } else {
+        attachGyro();
+      }
+    };
+
+    if (DevOrient && typeof DevOrient.requestPermission !== "function") {
+      attachGyro();
+    } else if (DevOrient) {
+      window.addEventListener("touchend", onFirstTap, { once: true, passive: true });
+    }
+
+    if (fine) {
+      window.addEventListener("pointermove", onMove, { passive: true });
+      window.addEventListener("pointerleave", resetTilt);
+    }
+
     return () => {
       window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerleave", onLeave);
+      window.removeEventListener("pointerleave", resetTilt);
+      window.removeEventListener("deviceorientation", onOrientation);
+      window.removeEventListener("touchend", onFirstTap);
     };
   }, []);
 
@@ -117,7 +147,7 @@ export default function Hero() {
           </div>
           <div ref={avatarRef} className="hero__avatar">
             <SafeImg file="me-ring.svg" eager className="hero__ring" />
-            <SafeImg file="me.png" eager alt={profile.name} className="hero__photo" width={260} height={260}
+            <SafeImg file="me.png" eager alt={profile.name} className="hero__photo" width={310} height={310}
               fallback={<AvatarPlaceholder />} />
           </div>
         </div>

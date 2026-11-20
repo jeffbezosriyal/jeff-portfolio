@@ -1,38 +1,21 @@
 import { useEffect, useRef, useState } from "react";
-import { experience, featured, profile, skills } from "../content";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
-const SUGGESTIONS = ["What has Jeffry built with AI?", "What is his AWS experience?", "Which tech stack does he use?"];
+const SUGGESTIONS = ["What has Jeffry built with AI?", "Tell me about his ESAB Flutter app", "What did he do at Hitachi on AWS?"];
 const GREETING: Msg = {
   role: "assistant",
-  content: "Hi! I’m an AI assistant that answers questions about Jeffry’s work, skills and experience. What would you like to know?",
+  content: "Hey! I’m Jeffry’s AI wingman—ask me anything specific about his AI builds, AWS cloud work, ESAB Flutter HMI, or how he engineered this site.",
 };
 
-function offlineReply(q: string): string {
-  const s = q.toLowerCase();
-  if (/aws|cloud|hitachi|vpc|lambda|ec2/.test(s)) {
-    return `At Hitachi (Feb 2026 – Apr 2026), Jeffry worked as a Cloud Engineering Intern setting up AWS IAM & Organizations governance, VPCs with EC2/EBS/RDS, and serverless backends using S3, Lambda, API Gateway, and DynamoDB.`;
-  }
-  if (/stack|skill|tech|python|react|flutter|language/.test(s)) {
-    return `Jeffry’s core stack includes ${skills.list.join(", ")}. He builds end-to-end systems from ML models and APIs to React/Flutter interfaces and AWS/Cloudflare deployments.`;
-  }
-  if (/ai|ml|project|serenity|stress|asl|sign|chatbot|wincy|esab/.test(s)) {
-    return `${featured.title}: ${featured.text} He also built an AI health chatbot (LLaMA + Pinecone), an industrial Flutter HMI app at ESAB, and the Wincy Software Solutions site (${experience[0].href}).`;
-  }
-  if (/contact|email|hire|reach|linkedin|github/.test(s)) {
-    return `You can reach Jeffry at ${profile.email} or connect via GitHub and LinkedIn in the Contact section below.`;
-  }
-  return `Jeffry Raymond is an ${profile.role.replace(/^I’m an?\s*/i, "").replace(/\.$/, "")} at ${profile.current.company}, working across AI, React/Flutter, and AWS cloud. Ask about his AI projects, AWS work, tech stack, or email ${profile.email}.`;
-}
-
-export default function ChatWidget({ triggerOpen }: { triggerOpen: number }) {
+export default function ChatWidget({ triggerOpen, draft, onDraftConsumed }: { triggerOpen: number; draft?: string | null; onDraftConsumed?: () => void }) {
   const [open, setOpen] = useState(false);
   const [closing, setClosing] = useState(false);
   const [msgs, setMsgs] = useState<Msg[]>([GREETING]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+  const [showTop, setShowTop] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const closeTimer = useRef<number>();
@@ -53,10 +36,24 @@ export default function ChatWidget({ triggerOpen }: { triggerOpen: number }) {
   };
 
   useEffect(() => {
-    if (triggerOpen > 0) openChat();
+    if (triggerOpen > 0) {
+      openChat();
+      if (draft) {
+        setInput(draft);
+        onDraftConsumed?.();
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [triggerOpen]);
 
   useEffect(() => () => window.clearTimeout(closeTimer.current), []);
+
+  useEffect(() => {
+    const onScroll = () => setShowTop(window.scrollY > 360);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   useEffect(() => { endRef.current?.scrollIntoView({ block: "end", behavior: "smooth" }); }, [msgs, busy, open]);
 
@@ -101,20 +98,16 @@ export default function ChatWidget({ triggerOpen }: { triggerOpen: number }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: next.filter((m) => m !== GREETING) }),
       });
-      if (res.status === 404) {
-        setMsgs([...next, { role: "assistant", content: offlineReply(content) }]);
-        return;
-      }
       const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.reply) throw new Error(data.error ?? "request failed");
+      if (!res.ok || !data.reply) throw new Error(data.error ?? `HTTP ${res.status}`);
       setMsgs([...next, { role: "assistant", content: data.reply }]);
     } catch (e) {
-      const limited = e instanceof Error && /too many/i.test(e.message);
+      const msg = e instanceof Error ? e.message : "Could not reach Gemini right now.";
       setMsgs([...next, {
         role: "assistant",
-        content: limited
-          ? "You’re sending messages quickly. Please wait a moment and try again."
-          : offlineReply(content),
+        content: /404/.test(msg)
+          ? "Local Vite dev doesn’t run Cloudflare Functions—use `npm run preview:cf` (or the live Cloudflare URL) to chat with Gemini."
+          : msg,
       }]);
     } finally {
       setBusy(false);
@@ -124,12 +117,27 @@ export default function ChatWidget({ triggerOpen }: { triggerOpen: number }) {
   return (
     <>
       {!open && (
-        <button className="chat__fab" onClick={openChat} aria-label="Ask Jeffry — open chat">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z" />
-          </svg>
-          <span>Ask Jeffry</span>
-        </button>
+        <div className="fab-dock">
+          {showTop && (
+            <button
+              type="button"
+              className="fab-top"
+              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+              aria-label="Back to top"
+              data-tip="Back to top"
+            >
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M12 19V5M5 12l7-7 7 7" />
+              </svg>
+            </button>
+          )}
+          <button className="chat__fab" onClick={openChat} aria-label="Ask Jeffry — open chat">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z" />
+            </svg>
+            <span>Ask Jeffry</span>
+          </button>
+        </div>
       )}
       {open && (
         <section className={`chat${closing ? " chat--closing" : ""}`} role="dialog" aria-label="Ask Jeffry chat">
@@ -143,9 +151,9 @@ export default function ChatWidget({ triggerOpen }: { triggerOpen: number }) {
             </div>
             <div className="chat__actions">
               {msgs.length > 1 && (
-                <button type="button" onClick={() => setMsgs([GREETING])} aria-label="Clear chat" title="Reset conversation">↺</button>
+                <button type="button" onClick={() => setMsgs([GREETING])} aria-label="Clear chat" data-tip="Reset chat">↺</button>
               )}
-              <button type="button" onClick={closeChat} aria-label="Close chat" title="Close">✕</button>
+              <button type="button" onClick={closeChat} aria-label="Close chat" data-tip="Close (Esc)">✕</button>
             </div>
           </header>
           <div className="chat__log" aria-live="polite">

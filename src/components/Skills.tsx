@@ -14,7 +14,7 @@ export default function Skills() {
 
       <ul className="skills__icons" aria-label="Technologies">
         {skillIcons.map((i) => (
-          <li key={i.label} title={i.label}>
+          <li key={i.label} data-tip={i.label}>
             <svg viewBox="0 0 24 24" fill={i.color} role="img" aria-label={i.label}><path d={i.path} /></svg>
           </li>
         ))}

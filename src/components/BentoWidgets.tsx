@@ -67,7 +67,7 @@ export default function BentoWidgets({ onCopyEmail, onOpenChat }: { onCopyEmail:
     <section className="bento container" aria-label="Live highlights and quick actions">
       <div className="bento__card bento__status">
         <span className="bento__eyebrow">LIVE TELEMETRY</span>
-        <p className="bento__clock">{time || "—"}</p>
+        <p className="bento__clock" data-tip="Live local time in Chennai">{time || "—"}</p>
         <p className="bento__loc">Chennai, India (IST)</p>
         <p className="bento__avail"><i aria-hidden="true" /> Open to AI &amp; Cloud roles</p>
       </div>
@@ -94,7 +94,7 @@ export default function BentoWidgets({ onCopyEmail, onOpenChat }: { onCopyEmail:
         <span className="bento__eyebrow">QUICK LAUNCH</span>
         <div className="bento__btns">
           <button type="button" className="bento__btn" onClick={onOpenChat}>Ask Jeffry AI</button>
-          <button type="button" className="bento__btn" onClick={onCopyEmail}>Copy Email</button>
+          <button type="button" className="bento__btn" onClick={onCopyEmail} data-tip="Copy email to clipboard">Copy Email</button>
           <a className="bento__btn" href={profile.github} target="_blank" rel="noopener noreferrer">GitHub</a>
           <a className="bento__btn" href={profile.linkedin} target="_blank" rel="noopener noreferrer">LinkedIn</a>
         </div>

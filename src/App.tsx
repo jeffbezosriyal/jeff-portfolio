@@ -23,6 +23,7 @@ export default function App() {
   const [loading, setLoading] = useState(() => !seenBefore());
   const [cmdOpen, setCmdOpen] = useState(false);
   const [chatTrigger, setChatTrigger] = useState(0);
+  const [chatDraft, setChatDraft] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
   const done = useCallback(() => {
@@ -133,11 +134,11 @@ export default function App() {
         <Experience />
         <SkillMatrix />
         <Skills />
-        <Featured />
+        <Featured onAskChat={(q) => { setChatDraft(q); setChatTrigger((c) => c + 1); }} />
         <Lab />
       </main>
       <Contact />
-      <ChatWidget triggerOpen={chatTrigger} />
+      <ChatWidget triggerOpen={chatTrigger} draft={chatDraft} onDraftConsumed={() => setChatDraft(null)} />
       <CommandPalette
         open={cmdOpen}
         onClose={() => setCmdOpen(false)}

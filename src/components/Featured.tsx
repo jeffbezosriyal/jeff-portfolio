@@ -11,7 +11,9 @@ const ClickIcon = () => (
   </svg>
 );
 
-export default function Featured() {
+const ESAB_PROMPT = "Tell me about the ESAB Transmax XP6 Flutter HMI app and how you improved efficiency by 30%.";
+
+export default function Featured({ onAskChat }: { onAskChat: (draft: string) => void }) {
   const [esabView, setEsabView] = useState<"tablet" | "mobile">("tablet");
 
   return (
@@ -19,6 +21,7 @@ export default function Featured() {
       {featuredProjects.map((proj, idx) => {
         const hasDual = Boolean(proj.secondaryImage);
         const activeImg = hasDual && esabView === "mobile" ? proj.secondaryImage! : proj.image;
+        const isEsab = proj.id === "esab-flutter";
 
         return (
           <div key={proj.id} className={`featured${idx % 2 === 1 ? " featured--flip" : ""}`}>
@@ -33,9 +36,24 @@ export default function Featured() {
               </div>
               <div className="featured__actions">
                 <div className="featured__links">
-                  {proj.links.map((l) => (
-                    <a key={l.label} href={l.href} aria-label={l.label} title={l.label}><ClickIcon /></a>
-                  ))}
+                  {proj.links.map((l) =>
+                    isEsab ? (
+                      <button
+                        key={l.label}
+                        type="button"
+                        className="featured__link-btn"
+                        aria-label={l.label}
+                        data-tip={l.label}
+                        onClick={() => onAskChat(ESAB_PROMPT)}
+                      >
+                        <ClickIcon />
+                      </button>
+                    ) : (
+                      <a key={l.label} href={l.href} aria-label={l.label} data-tip={l.label}>
+                        <ClickIcon />
+                      </a>
+                    )
+                  )}
                 </div>
                 {hasDual && (
                   <div className="featured__switch" role="group" aria-label="Switch device view">
@@ -71,7 +89,7 @@ export default function Featured() {
                   className="featured__mobile-pip"
                   onClick={() => setEsabView("mobile")}
                   aria-label="Switch to ESAB Mobile App screenshot"
-                  title="View Mobile App UI"
+                  data-tip="View Mobile App UI"
                 >
                   <SafeImg file={proj.secondaryImage} alt="ESAB Mobile HMI preview" />
                 </button>

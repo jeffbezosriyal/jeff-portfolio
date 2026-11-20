@@ -64,7 +64,7 @@ export default function Header({ onOpenCmd }: { onOpenCmd: () => void }) {
             className="header__cmd"
             onClick={onOpenCmd}
             aria-label="Open command palette"
-            title="Quick jump (Ctrl+K / ⌘K)"
+            data-tip="Quick jump (Ctrl+K / ⌘K)"
           >
             <span>⌘K</span>
           </button>

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useWebcam } from "../../hooks/useWebcam";
 import { classifySign, SIGN_GUIDES, Smoother } from "../../lib/gestures";
 import { createHandLandmarker, HAND_CONNECTIONS } from "../../lib/vision";
+import LabLoader from "./LabLoader";
 import type { HandLandmarker } from "@mediapipe/tasks-vision";
 
 export default function AslDemo() {
@@ -76,14 +77,24 @@ export default function AslDemo() {
           <canvas ref={canvasRef} />
           {!active && (
             <div className="demo__overlay">
-              <button className="btn btn--lg" onClick={run} disabled={status === "loading"}>
-                {status === "loading" ? "Loading model…" : "Start camera"}
-              </button>
-              <p>Runs fully in your browser. No video is uploaded or stored.</p>
+              {status === "loading" ? (
+                <LabLoader label="BOOTING HAND LANDMARK ENGINE" />
+              ) : (
+                <>
+                  <button
+                    className="btn btn--lg"
+                    onClick={run}
+                    data-tip="Runs 100% on-device via MediaPipe"
+                  >
+                    Start camera
+                  </button>
+                  <p>Runs fully in your browser. No video is uploaded or stored.</p>
+                </>
+              )}
             </div>
           )}
+          {active && <button className="btn demo__stop" onClick={halt} data-tip="Stop camera stream">Stop</button>}
         </div>
-        {active && <button className="btn demo__stop" onClick={halt}>Stop</button>}
       </div>
 
       <div className="demo__panel" aria-live="polite">
@@ -115,6 +126,7 @@ export default function AslDemo() {
                   type="button"
                   className={g.label === sign ? "is-on" : g.label === selectedGuide.label ? "is-picked" : undefined}
                   onClick={() => setSelectedGuide(g)}
+                  data-tip={g.cue}
                 >
                   <span aria-hidden="true">{g.emoji}</span> {g.label}
                 </button>
