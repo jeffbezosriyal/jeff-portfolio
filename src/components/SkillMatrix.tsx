@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { learnings, skillMatrix, workMetrics, type SkillCategory } from "../content";
 
 const CATEGORIES: ("All" | SkillCategory)[] = [
@@ -14,6 +14,17 @@ export default function SkillMatrix() {
   const visible = cat === "All" ? skillMatrix : skillMatrix.filter((s) => s.category === cat);
   const [selectedName, setSelectedName] = useState(skillMatrix[0].name);
   const active = visible.find((s) => s.name === selectedName) ?? visible[0];
+  useEffect(() => {
+    const onNav = (e: Event) => {
+      const d = (e as CustomEvent<{ skillName?: string }>).detail;
+      if (!d?.skillName) return;
+      const q = d.skillName.toLowerCase();
+      const hit = skillMatrix.find((s) => s.name.toLowerCase().includes(q) || s.tools.some((t) => t.toLowerCase().includes(q)));
+      if (hit) { setCat("All"); setSelectedName(hit.name); }
+    };
+    window.addEventListener("portfolio:navigate", onNav);
+    return () => window.removeEventListener("portfolio:navigate", onNav);
+  }, []);
 
   const R = 34;
   const C = 2 * Math.PI * R;

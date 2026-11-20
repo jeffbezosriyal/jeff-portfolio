@@ -1,3 +1,18 @@
 # Copy to .dev.vars for local testing with `npm run preview:cf` (never commit .dev.vars)
 GEMINI_API_KEY=your-key-from-google-ai-studio
-# GEMINI_MODEL=gemini-flash-latest
+# GEMINI_MODEL=gemini-3.5-flash-lite
+
+# Optional: Live Google Calendar + Meet + Gmail integration
+# GOOGLE_CLIENT_ID=your-oauth-client-id
+# GOOGLE_CLIENT_SECRET=your-oauth-client-secret
+# GOOGLE_REFRESH_TOKEN=your-oauth-refresh-token
+
+# Optional: Email delivery via Resend (recommended) + Turnstile bot protection
+# RESEND_API_KEY=re_xxxxxxxxx
+# FROM_EMAIL=Jeffry Raymond <hello@yourdomain.dev>
+# TURNSTILE_SECRET_KEY=your-turnstile-secret-key
+# VITE_TURNSTILE_SITE_KEY=your-turnstile-site-key
+
+# Optional: GitHub token (avoids 60/hr unauthenticated rate limit) & site URL
+# GITHUB_TOKEN=ghp_xxxxxxxxx
+# SITE_URL=https://jeff-portfolio-2gx.pages.dev

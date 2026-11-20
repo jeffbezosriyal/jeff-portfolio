@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 
 const AslDemo = lazy(() => import("./lab/AslDemo"));
 const MoodDemo = lazy(() => import("./lab/MoodDemo"));
@@ -11,6 +11,14 @@ const tabs = [
 export default function Lab() {
   const [tab, setTab] = useState<(typeof tabs)[number]["id"]>("asl");
   const current = tabs.find((t) => t.id === tab)!;
+  useEffect(() => {
+    const onNav = (e: Event) => {
+      const d = (e as CustomEvent<{ labTab?: "asl" | "mood" }>).detail;
+      if (d?.labTab === "asl" || d?.labTab === "mood") setTab(d.labTab);
+    };
+    window.addEventListener("portfolio:navigate", onNav);
+    return () => window.removeEventListener("portfolio:navigate", onNav);
+  }, []);
   return (
     <section id="lab" className="section container" aria-labelledby="lab-title">
       <h2 id="lab-title" className="section__title">The Lab</h2>

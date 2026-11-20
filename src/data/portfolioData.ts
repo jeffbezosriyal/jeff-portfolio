@@ -10,6 +10,7 @@ export const profile = {
   email: "jeffryraymond2004@gmail.com",
   github: "https://github.com/jeffbezosriyal",
   linkedin: "https://www.linkedin.com/in/jeffryraymond",
+  resumeUrl: "https://drive.google.com/file/d/16iSctku3-HkJWSo20ylZ3cPVb0eaQmZf/view?usp=sharing",
   heroLead: "Applied AI & Cloud Developer Who",
   heroLine1: "ships complete systems",
   heroLine2Pre: "from model to ",
